@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>员工管理</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <!--引入本地的css样式-->
+  <link rel="stylesheet" href="../../static/layui/css/layui.css" media="all">
+  <link rel="stylesheet" href="../../static/css/admin.css" media="all">
+
+</head>
+<body>
+
+  <div class="layui-fluid">   
+    <div class="layui-card">
+      <div class="layui-form layui-card-header layuiadmin-card-header-auto">
+        <div class="layui-form-item">
+          <div class="layui-inline">
+            <label class="layui-form-label">员工姓名</label>
+            <div class="layui-input-block">
+              <input type="text" id="name" name="name" placeholder="输入员工姓名" autocomplete="off" class="layui-input">
+            </div>
+          </div>
+          <div class="layui-inline">
+            <button class="layui-btn layuiadmin-btn-admin" id="btn_search" lay-submit lay-filter="LAY-user-back-search">
+              <i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="layui-card-body">
+        <!--头部工具栏-->
+        <script type="text/html" id="toolbarDemo">
+          <div class="layui-btn-container">
+            <button class="layui-btn layuiadmin-btn-admin" lay-event="add" id="add_yuangong" data-type="add_yuangong">添加</button>
+          </div>
+        </script>
+
+        <!--数据表格-->
+        <table class="layui-hide" id="LAY-user-back-manage" lay-filter="LAY-user-back-manage"></table>
+        <!-- laytpl模板引擎 数据库性别字段 1转换成男显示到页面；2转换成女显示到页面 -->
+        <script type="text/html" id="yuangongSexTpl">
+          {{#  if(d.yuangong_sex == 1){ }}
+          <span>男</span>
+          {{#  } else if(d.yuangong_sex == 2){ }}
+          <span>女</span>
+          {{#  } }}
+        </script>
+        <!-- laytpl模板引擎 数据库状态字段
+        1转换成正常显示到页面；2转换成冻结显示到页面 3转换成删除显示到页面 -->
+        <script type="text/html" id="statusTpl">
+          {{#  if(d.status == 1){ }}
+          <span>正常</span>
+          {{#  } else if(d.status == 2){ }}
+          <button type="button" class="layui-btn-xs layui-btn-disabled">冻结</button>
+          {{#  } else if(d.status == 3){ }}
+          <button type="button" class="layui-btn-xs layui-btn-danger">删除</button>
+          {{#  } }}
+        </script>
+
+
+<!--        <script type="text/html" id="buttonTpl">-->
+<!--          {{#  if(d.check == true){ }}-->
+<!--            <button class="layui-btn layui-btn-xs">已审核</button>-->
+<!--          {{#  } else { }}-->
+<!--            <button class="layui-btn layui-btn-primary layui-btn-xs">未审核</button>-->
+<!--          {{#  } }}-->
+<!--        </script>-->
+
+<!--        <script type="text/html" id="table-useradmin-admin">-->
+<!--          <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i>编辑</a>-->
+<!--          {{#  if(d.role == '超级管理员'){ }}-->
+<!--          <a class="layui-btn layui-btn-disabled layui-btn-xs"><i class="layui-icon layui-icon-delete"></i>删除</a>-->
+<!--          {{#  } else { }}-->
+<!--          <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"><i class="layui-icon layui-icon-delete"></i>删除</a>-->
+<!--          {{#  } }}-->
+<!--        </script>-->
+        <!--侧边工具栏-->
+        <script type="text/html" id="barDemo">
+          <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+          <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+
+
+      </div>
+    </div>
+  </div>
+
+<script src="../../static/js/jquery-3.6.0.min.js"></script>
+<!--引入本地layui.js-->
+<script src="../../static/layui/layui.js"></script>
+<!--js-->
+<script type="text/javascript">
+    layui.config({
+        base: '../../static/layui/layuiadmin/' //静态资源所在路径js
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use('index');
+</script>
+
+  <script type="text/javascript">
+      layui.use(['table','form'], function(){
+          var table = layui.table;
+          var form = layui.form; //只有执行了这一步，部分表单元素才会自动修饰成功
+        //表格渲染-分页查询数据
+        table.render({
+          elem:'#LAY-user-back-manage',//绑定在哪个表格-使用ID选择器
+          url:'/yuangong/queryListByPage',//servlet路径
+          title:'员工信息表',
+          toolbar: '#toolbarDemo',
+          cols:[[
+            {field:"id",title: '序号',sort:true,width:80},
+            {field:"name",title: '员工姓名',width:100},
+            {field:"address",title: '地址',width:150},
+            {field:"tel",title: '电话',width:120},
+            {field:"sex",title: '性别'},
+            {field:"age",title: '年龄'},
+            {field:"birthday",title: '出生日期',width:120},
+            {field:"zhiwei",title: '职位',width:100},
+            {field:"education",title: '文化程度',width:100},
+            {field:"dept_name",title: '所属部门',width:120},
+            {fixed:'right',title: '操作',toolbar:'#barDemo',width:120}
+          ]],
+          page:true,
+          limits:[5,10,15,20]
+        })
+        //监听侧边工具栏-修改和删除
+        table.on('tool(LAY-user-back-manage)',function (obj){
+          //获取当前行选中行数据
+          var data  = obj.data;
+          if(obj.event === 'del'){//删除
+            layer.confirm('确认要删除吗?',function (index){
+              //使用Ajax异步请求
+              $.ajax({
+                url:"/delyuangong",
+                type:"post",
+                data:{id:data.id},//json {key:value,key:value}
+                dataType: "json",
+                success:function (res) {//msg code data
+                  if (res.code == 200) {
+                    //弹出提示信息：成功-数据库少了一条数据/失败
+                    layer.msg(res.msg);
+                    //页面也要把数据删除
+                    obj.del();
+                    //关闭弹出层
+                    layer.close(index);
+                  }
+                  if(res.code == 500){
+                    layer.msg(res.msg);
+                    //关闭弹出层
+                    layer.close(index);
+                  }
+                  if(res.code == 501){
+                    layer.msg(res.msg);
+                    //关闭弹出层
+                    layer.close(index);
+                  }
+                }
+              })
+            })
+          }else if(obj.event === 'edit'){//编辑
+            layer.open({
+              type:2,
+              title:"编辑员工信息",
+              content:'edit.html',
+              area:['450px','400px'],
+              maxmin:true,
+              btn:['修改','关闭'],
+              yes:function (index,layero){
+                //获取edit.html-子页面
+                var body = layer.getChildFrame('body', index);
+                //获取子页面form表单输入框输入得值
+                var submitData = body.find("#myform").serialize();
+                //使用Ajax异步请求
+                $.ajax({
+                  url:"/updateyuangong",
+                  type:"post",
+                  data:submitData,
+                  dataType:"json",
+                  success:function (res){
+                    if(res.code == 200){
+                      layer.msg(res.msg,{
+                        offset:"15px",
+                        icon:1,
+                        time:1000
+                      },function (){
+                        //刷新
+                        window.location.reload();
+                      })
+                    }
+                    if(res.code == 500){
+                      layer.msg(res.msg,{
+                        offset:"15px",
+                        icon:1,
+                        time:1000
+                      },function (){
+                        //刷新
+                        window.location.reload();
+                      })
+                    }
+                    if(res.code == 501){
+                      layer.msg(res.msg,{
+                        offset:"15px",
+                        icon:1,
+                        time:1000
+                      })
+                    }
+                    //关闭弹出层
+                    layer.close(index);
+                  }
+                })
+              },
+              success: function(layero, index){
+                //获取edit.html-子页面
+                var body = layer.getChildFrame('body', index);
+                //得到iframe页的窗口对象，做页面数据回显需要使用
+                var iframeWin = window[layero.find('iframe')[0]['name']];
+                //var iframeWin = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                //页面输入框值回显
+                //id
+                body.find("input[name=id]").val(data.id);
+                //姓名
+                body.find("input[name=name]").val(data.name);
+                //年龄
+                body.find("input[name=age]").val(data.age);
+                //出生日期
+                body.find("input[name=birthday]").val(data.birthday);
+                //性别
+                // body.find("input[value="+data.sex+"]").attr("checked","checked");
+                body.find("input[name=sex]").val(data.sex);
+                //文化程度
+                body.find("input[name=birthday]").val(data.birthday);
+                //联系方式
+                body.find("input[name=tel]").val(data.tel);
+                //地址
+                body.find("input[name=address]").val(data.address);
+                //部门
+                // body.find("option[value="+data.dept_name+"]").attr("selected",true);
+                body.find("input[name=dept_name]").val(data.dept_name);
+                //年龄
+                body.find("input[name=age]").val(data.age);
+                //职位
+                // body.find("option[value="+data.zhiwei+"]").attr("selected",true);
+                body.find("input[name=zhiwei]").val(data.zhiwei);
+
+                //重载
+                //  iframeWin.layui.form.render("radio")
+                //  iframeWin.layui.form.render("select")
+                iframeWin.layui.form.render();
+              }
+            })
+          }
+        })
+        //监听头部工具栏-新增数据
+        table.on('toolbar(LAY-user-back-manage)',function (obj){
+          var checkStatus = table.checkStatus(obj.config.id);
+          console.log(obj);
+          console.log(checkStatus);
+          switch (obj.event){
+            case 'add':
+              //添加
+              layer.open({
+                type:2,//iframe层：页面、数据回显
+                title:"添加员工信息",//标题
+                content:'add.html',//弹出页面
+                area: ['450px', '500px'],
+                maxmin:true,//开启放大缩小
+                btn:['添加','关闭'],//按钮
+                yes:function (index,layero){
+                  //把数据提交给Controller
+                  //获取add.html
+                  var body = layer.getChildFrame('body', index);
+                  //获取form表单中输入得数据值
+                  var submitData = body.find("#myform").serialize();
+                  //使用Ajax异步请求
+                  $.ajax({
+                    url:"/addyuangong",
+                    type: "post",
+                    data:submitData,
+                    dataType:"json",
+                    success:function (res){//code msg data
+                      if(res.code == 200){//新增成功
+                        layer.msg(res.msg,{
+                          offset:"15px",
+                          icon:1,
+                          time:1000
+                        },function (){
+                          //刷新/重新渲染数据表格——把新增数据显示在页面得数据表格中
+                          window.location.reload();
+                        })
+                      }
+                      if(res.code == 500){
+                        layer.msg(res.msg,{
+                          offset:"15px",
+                          icon:1,
+                          time:1000
+                        })
+                      }
+                      if(res.code == 501){
+                        layer.msg(res.msg,{
+                          offset:"15px",
+                          icon:1,
+                          time:1000
+                        })
+                      }
+                      //关闭弹出层
+                      layer.close(index);
+                    }
+                  })
+                }
+              })
+                  //case 'batchdel':
+          }
+        })
+        //搜索点击事件
+        $("#btn_search").click(function () {
+                var name = $("#name").val();
+                //执行重载
+                table.reload('LAY-user-back-manage', {
+                    url:'/searchyuangong',
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    ,where: {
+                        name: name
+                    }
+                });
+          });
+
+//           //监听行工具事件
+//           table.on('tool(LAY-user-back-manage)', function(obj){
+//               var data = obj.data;//选中的当前行的数
+//               //var iframeWin;
+//             if(obj.event === 'del'){
+//                   layer.confirm('真的删除行吗', function(index){
+//                       //通过ajax实现真正的删除
+//                       $.ajax({
+//                           url:"/delyuangong",
+//                           type:"post",
+//                           data:{id:data.id},
+//                           dataType:"json",
+//                           success:function (res) {
+//                               layer.alert(res.msg);
+//                               obj.del();//页面删除obj.del()
+//                               layer.close(index);
+//                           }
+//                       })
+//
+//                   });
+//               } else if(obj.event === 'edit'){
+//                   layer.open({
+//                       type: 2
+//                       ,title: '编辑员工'
+//                       ,content: 'edit.html'
+//                       ,area: ['450px', '550px']
+//                       ,maxmin:true
+//                       ,btn: ['确定', '取消']
+//                       ,yes: function(index, layero){
+//                           var body = layer.getChildFrame('body', index);
+//                           //var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+//                           var submitData = body.find('#myform').serialize();
+//                           console.log(submitData);
+//                           //提交 Ajax 成功后，静态表单中的数据
+//                           $.ajax({
+//                               url:"/updateyuangong",
+//                               type:"post",
+//                               data:submitData,
+//                               dataType:"json",
+//                               success:function (res) {
+//                                   if(res.code == 200){
+//                                       layer.msg(res.msg, {
+//                                           offset: '15px'
+//                                           ,icon: 1
+//                                           ,time: 1000
+//                                       },function () {
+//                                           //刷新
+//                                           window.location.reload();
+//                                       });
+//                                   }
+//                                   if(res.code == 500){
+//                                       layer.msg(res.msg, {
+//                                           offset: '15px'
+//                                           ,icon: 1
+//                                           ,time: 1000
+//                                       },function () {
+//                                           //刷新
+//                                           window.location.reload();
+//                                       });
+//                                   }
+//                                   layer.close(index); //关闭弹层
+//
+//                               }
+//                           })
+//
+//                       }
+//                       ,
+//                     success: function(layero, index){//点击弹出框时，执行的函数。
+//                       //获取弹出编辑框的body内容
+//                       var body = layer.getChildFrame('body', index);
+//                       var iframeWin = window[layero.find('iframe')[0]['name']];
+//                       //var iframeWin = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+//                       //id
+//                       body.find("input[name=id]").val(data.id);
+//                      //姓名
+//                       body.find("input[name=name]").val(data.name);
+//                       //出生日期
+//                       body.find("input[name=birthday]").val(data.birthday);
+//                       //性别
+//                       body.find("input[value="+data.sex+"]").attr("checked","checked");
+//                       //文化程度
+//                       body.find("input[name=birthday]").val(data.birthday);
+//                       //联系方式
+//                       body.find("input[name=tel]").val(data.tel);
+//                       //地址
+//                       body.find("input[name=address]").val(data.address);
+//                       //部门
+//                       body.find("option[value="+data.dept_name+"]").attr("selected",true);
+//                       //年龄
+//                       body.find("input[name=age]").val(data.age);
+//                       //职位
+//                       body.find("option[value="+data.zhiwei+"]").attr("selected",true);
+//
+//                       //重载
+//                       // iframeWin.layui.form.render("radio")
+//                       // iframeWin.layui.form.render("select")
+//                       iframeWin.layui.form.render()
+//                     }
+//                   });
+//               }
+//           });
+//
+//           //头工具栏事件
+//           table.on('toolbar(LAY-user-back-manage)', function(obj){
+//               var checkStatus = table.checkStatus(obj.config.id);
+//               switch(obj.event){
+//                   case 'batchdel':
+//                       var data = checkStatus.data;
+//                       if(data.length < 1){
+//                           layer.msg('未选中删除的数据');
+//                       }else{
+//                           //删除，通过ajax方式进行删除
+//                           layer.confirm('真的删除选中行的数据吗', function(index){
+//                               var ids = new Array();
+//                               $.each(data,function (index,item) {
+//                                   //循环遍历勾选数据，只将要删除数据的id号获取处理，塞给数组对象
+//                                   ids.push(item.id);
+//                                 console.log(ids);
+//                               })
+//
+//                               //通过ajax传递给后端
+//                               $.ajax({
+//                                   url:"/yuangong/batchdel",
+//                                   type:"post",
+//                                   data:{ids:ids},
+//                                   traditional:true,//单纯的传递数组，需要将其进行传统序列化操作
+//                                   dataType:"json",
+//                                   success:function (res) {
+//                                       layer.msg(res.msg, {
+//                                           offset: '15px'
+//                                           ,icon: 1
+//                                           ,time: 2000
+//                                       },function () {
+//                                           //刷新
+//                                           window.location.reload();
+//                                       });
+//                                   }
+//                               })
+//                           });
+//
+//                       }
+//                       break;
+//                   case 'add':
+//                       layer.open({
+//                           type: 2
+//                           ,title: '添加员工'
+//                           ,content: 'add.html'
+//                           ,area: ['450px', '550px']
+//                           ,maxmin:true
+//                           ,btn: ['确定', '取消']
+//                           ,yes: function(index, layero){
+//                               var body = layer.getChildFrame('body', index);
+//                               var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+//                               var submitData = body.find('#myform').serialize();//把add.html中表单中所有参数通过Ajax的data:submitData传递给服务器端
+//                               //提交 Ajax 成功后，静态表单中的数据
+//                               $.ajax({
+//                                   url:"/addyuangong",
+//                                   type:"post",
+//                                   data:submitData,//所有表单中参数值
+//                                   dataType:"json",
+//                                   success:function (res) {
+//                                       if(res.code == 200){
+//                                           layer.msg(res.msg, {
+//                                               offset: '15px'
+//                                               ,icon: 1
+//                                               ,time: 1000
+//                                           },function () {
+//                                               //刷新
+//                                               window.location.reload();
+//                                           });
+//                                       }
+//                                       if(res.code == 500){
+//                                           layer.msg(res.msg, {
+//                                               offset: '15px'
+//                                               ,icon: 1
+//                                               ,time: 1000
+//                                           },function () {
+//                                               //刷新
+//                                               window.location.reload();
+//                                           });
+//                                       }
+//                                       layer.close(index); //关闭弹层
+//
+//                                   }
+//                               })
+//
+//
+// //                      var iframeWindow = window['layui-layer-iframe'+ index]
+// //                          ,submitID = 'LAY-user-back-submit'
+// //                          ,submit = layero.find('iframe').contents().find('#'+ submitID);
+// //                      //监听提交
+// //                      iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
+// //                          var field = data.field; //获取提交的字段
+// //                          alert("ok");
+// //                          console.log(field);
+// //
+// //
+// //                          table.reload('LAY-user-front-submit'); //数据刷新
+// //                          layer.close(index); //关闭弹层
+// //                      });
+//
+// //                      submit.trigger('click');
+//                           }
+//                       });
+//                       break;
+//                   //自定义头工具栏右侧图标 - 提示
+//                   case 'LAYTABLE_TIPS':
+//                       layer.alert('这是工具栏右侧自定义的一个图标按钮');
+//                       break;
+//               };
+//           });
+      });
+  </script>
+
+</body>
+</html>
+

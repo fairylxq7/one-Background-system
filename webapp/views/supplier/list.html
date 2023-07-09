@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>员工管理</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <!--引入本地的css样式-->
+  <link rel="stylesheet" href="../../static/layui/css/layui.css" media="all">
+  <link rel="stylesheet" href="../../static/css/admin.css" media="all">
+
+</head>
+<body>
+
+  <div class="layui-fluid">   
+    <div class="layui-card">
+      <div class="layui-form layui-card-header layuiadmin-card-header-auto">
+        <div class="layui-form-item">
+          <div class="layui-inline">
+            <label class="layui-form-label">单位名称</label>
+            <div class="layui-input-block">
+              <input type="text" id="name" name="name" placeholder="输入单位名称" autocomplete="off" class="layui-input">
+            </div>
+          </div>
+          <div class="layui-inline">
+            <button class="layui-btn layuiadmin-btn-admin" id="btn_search" lay-submit lay-filter="LAY-user-back-search">
+              <i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="layui-card-body">
+        <!--头部工具栏-->
+        <script type="text/html" id="toolbarDemo">
+          <div class="layui-btn-container">
+            <button class="layui-btn layuiadmin-btn-admin" lay-event="add" id="add_employee" data-type="add_employee">添加</button>
+          </div>
+        </script>
+
+        <!--1.数据表格-->
+        <table class="layui-hide" id="LAY-user-back-manage" lay-filter="LAY-user-back-manage"></table>
+        <!-- laytpl模板引擎 数据库性别字段 1转换成男显示到页面；2转换成女显示到页面 -->
+      <!--  <script type="text/html" id="employeeSexTpl">
+          {{#  if(d.employee_sex == 1){ }}
+          <span>男</span>
+          {{#  } else if(d.employee_sex == 2){ }}
+          <span>女</span>
+          {{#  } }}
+        </script>-->
+        <!-- laytpl模板引擎 数据库状态字段
+        1转换成正常显示到页面；2转换成冻结显示到页面 3转换成删除显示到页面 -->
+<!--        <script type="text/html" id="statusTpl">-->
+<!--          {{#  if(d.status == 1){ }}-->
+<!--          <span>正常</span>-->
+<!--          {{#  } else if(d.status == 2){ }}-->
+<!--          <button type="button" class="layui-btn-xs layui-btn-disabled">冻结</button>-->
+<!--          {{#  } else if(d.status == 3){ }}-->
+<!--          <button type="button" class="layui-btn-xs layui-btn-danger">删除</button>-->
+<!--          {{#  } }}-->
+<!--        </script>-->
+
+
+        <!--侧边工具栏-->
+        <script type="text/html" id="barDemo">
+          <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+          <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+
+
+      </div>
+    </div>
+  </div>
+
+<script src="../../static/js/jquery-3.6.0.min.js"></script>
+<!--引入本地layui.js-->
+<script src="../../static/layui/layui.js"></script>
+<!--js-->
+<script type="text/javascript">
+    layui.config({
+        base: '../../static/layui/layuiadmin/' //静态资源所在路径js
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use('index');
+</script>
+
+  <script type="text/javascript">
+      layui.use(['table','form'],function (){
+          var table = layui.table;
+          var form = layui.form;
+          //表格渲染-分页查询数据
+          table.render({
+            elem:'#LAY-user-back-manage',//绑定在哪个表格-使用ID选择器
+            url:'/supplier/queryListByPage',//servlet路径
+            title:'供应商信息表',
+            toolbar: '#toolbarDemo',
+            cols:[[
+              {field:"id",title: '序号',sort:true},
+              {field:"name",title: '单位名称'},
+              {field:"address",title: '地址',width:120},
+              {field:"connection",title: '联系人'},
+              {field:"tel",title: '电话'},
+              {field:"code",title: '邮编'},
+              {field:"fax",title: '传真'},
+              {field:"email",title: '电子邮箱',width:120},
+              {fixed:'right',title: '操作',toolbar:'#barDemo',width:150}
+            ]],
+            page:true,
+            limits:[5,10,15,20]
+          })
+          //监听侧边工具栏-修改和删除
+          table.on('tool(LAY-user-back-manage)',function (obj){
+            //获取当前行/选中行数据
+            var data  = obj.data;
+            if(obj.event === 'del'){//删除
+                layer.confirm('确认要删除吗?',function (index){
+                    //使用Ajax异步请求
+                    $.ajax({
+                      url:"/supplier/delSupplier",
+                      type:"post",
+                      data:{id:data.id},//json {key:value,key:value}
+                      dataType: "json",
+                      success:function (res) {//msg code data
+                        if (res.code == 200) {
+                          //弹出提示信息：成功-数据库少了一条数据/失败
+                          layer.msg(res.msg);
+                          //页面也要把数据删除
+                          obj.del();
+                          //关闭弹出层
+                          layer.close(index);
+                        }
+                        if(res.code == 500){
+                          layer.msg(res.msg);
+                          //关闭弹出层
+                          layer.close(index);
+                        }
+                        if(res.code == 501){
+                          layer.msg(res.msg);
+                          //关闭弹出层
+                          layer.close(index);
+                        }
+                      }
+                    })
+                })
+            }else if(obj.event === 'edit'){//编辑
+                  layer.open({
+                    type:2,
+                    title:"编辑供应商信息",
+                    content:'edit.html',
+                    area:['450px','400px'],
+                    maxmin:true,
+                    btn:['修改','关闭'],
+                    yes:function (index,layero){
+                      //获取edit.html-子页面
+                      var body = layer.getChildFrame('body', index);
+                      //获取子页面form表单输入框输入得值
+                      var submitData = body.find("#myform").serialize();
+                      //使用Ajax异步请求
+                      $.ajax({
+                        url:"/supplier/updateSupplier",
+                        type:"post",
+                        data:submitData,
+                        dataType:"json",
+                        success:function (res){
+                          if(res.code == 200){
+                            layer.msg(res.msg,{
+                              offset:"15px",
+                              icon:1,
+                              time:1000
+                            },function (){
+                              //刷新
+                              window.location.reload();
+                            })
+                          }
+                          if(res.code == 500){
+                            layer.msg(res.msg,{
+                              offset:"15px",
+                              icon:1,
+                              time:1000
+                            },function (){
+                              //刷新
+                              window.location.reload();
+                            })
+                          }
+                          if(res.code == 501){
+                            layer.msg(res.msg,{
+                              offset:"15px",
+                              icon:1,
+                              time:1000
+                            })
+                          }
+                          //关闭弹出层
+                          layer.close(index);
+                        }
+                      })
+                    },
+                    success: function(layero, index){
+                      //获取edit.html-子页面
+                      var body = layer.getChildFrame('body', index);
+                      //得到iframe页的窗口对象，做页面数据回显需要使用
+                      var iframeWin = window[layero.find('iframe')[0]['name']];
+                      //页面输入框值回显
+                      body.find("input[name=id]").val(data.id);
+                      body.find("input[name=name]").val(data.name);
+                      body.find("input[name=address]").val(data.address);
+                      body.find("input[name=connection]").val(data.connection);
+                      body.find("input[name=tel]").val(data.tel);
+                      //把数据渲染在iframe层
+                      iframeWin.layui.form.render();
+                    }
+                  })
+            }
+          })
+          //监听头部工具栏-新增数据
+          table.on('toolbar(LAY-user-back-manage)',function (obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            console.log(obj);
+            console.log(checkStatus);
+            switch (obj.event){
+              case 'add':
+                //添加
+                layer.open({
+                  type:2,//iframe层：页面、数据回显
+                  title:"添加供应商信息",//标题
+                  content:'add.html',//弹出页面
+                  area: ['450px', '500px'],
+                  maxmin:true,//开启放大缩小
+                  btn:['添加','关闭'],//按钮
+                  yes:function (index,layero){
+                      //把数据提交给Controller
+                      //获取add.html
+                      var body = layer.getChildFrame('body', index);
+                      //获取form表单中输入得数据值
+                      var submitData = body.find("#myform").serialize();
+                      //使用Ajax异步请求
+                      $.ajax({
+                          url:"/supplier/addSupplier",
+                          type: "post",
+                          data:submitData,//{name:"九九制药",address:"北京市XX",connection:"小三"}
+                          dataType:"json",
+                          success:function (res){//code msg data
+                                if(res.code == 200){//新增成功
+                                    layer.msg(res.msg,{
+                                      offset:"15px",
+                                      icon:1,
+                                      time:1000
+                                    },function (){
+                                      //刷新/重新渲染数据表格——把新增数据显示在页面得数据表格中
+                                      window.location.reload();
+                                    })
+                                }
+                                if(res.code == 500){
+                                  layer.msg(res.msg,{
+                                    offset:"15px",
+                                    icon:1,
+                                    time:1000
+                                  })
+                                }
+                            if(res.code == 501){
+                              layer.msg(res.msg,{
+                                offset:"15px",
+                                icon:1,
+                                time:1000
+                              })
+                            }
+                            //关闭弹出层
+                            layer.close(index);
+                          }
+                      })
+                  }
+                })
+              //case 'batchdel':
+            }
+          })
+      })
+  </script>
+
+</body>
+</html>
+
